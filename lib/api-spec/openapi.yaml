@@ -1,0 +1,297 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Personal Expense Prediction AI API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: expenses
+    description: Expense management
+  - name: analytics
+    description: Analytics and predictions
+  - name: reports
+    description: Report downloads
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /expenses:
+    get:
+      operationId: listExpenses
+      tags: [expenses]
+      summary: List all expenses
+      parameters:
+        - name: month
+          in: query
+          schema:
+            type: ["string", "null"]
+          description: Filter by month (YYYY-MM)
+        - name: category
+          in: query
+          schema:
+            type: ["string", "null"]
+      responses:
+        "200":
+          description: List of expenses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Expense"
+    post:
+      operationId: createExpense
+      tags: [expenses]
+      summary: Add a new expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExpenseInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+
+  /expenses/{id}:
+    delete:
+      operationId: deleteExpense
+      tags: [expenses]
+      summary: Delete an expense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /analytics/summary:
+    get:
+      operationId: getSummary
+      tags: [analytics]
+      summary: Get expense summary for current month
+      responses:
+        "200":
+          description: Summary stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Summary"
+
+  /analytics/by-category:
+    get:
+      operationId: getByCategory
+      tags: [analytics]
+      summary: Get expenses grouped by category
+      parameters:
+        - name: month
+          in: query
+          schema:
+            type: ["string", "null"]
+      responses:
+        "200":
+          description: Category breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryBreakdown"
+
+  /analytics/trend:
+    get:
+      operationId: getTrend
+      tags: [analytics]
+      summary: Get monthly spending trend
+      responses:
+        "200":
+          description: Monthly trend
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MonthlyTrend"
+
+  /analytics/predict:
+    get:
+      operationId: getPrediction
+      tags: [analytics]
+      summary: Get ML-based prediction for next month
+      responses:
+        "200":
+          description: Prediction result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Prediction"
+
+  /analytics/recommendations:
+    get:
+      operationId: getRecommendations
+      tags: [analytics]
+      summary: Get AI saving recommendations
+      responses:
+        "200":
+          description: Saving recommendations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Recommendation"
+
+  /reports/download:
+    get:
+      operationId: downloadReport
+      tags: [reports]
+      summary: Download financial report as CSV
+      parameters:
+        - name: month
+          in: query
+          schema:
+            type: ["string", "null"]
+      responses:
+        "200":
+          description: CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    Expense:
+      type: object
+      required: [id, amount, category, description, date, createdAt]
+      properties:
+        id:
+          type: integer
+        amount:
+          type: number
+        category:
+          type: string
+        description:
+          type: string
+        date:
+          type: string
+        createdAt:
+          type: string
+
+    ExpenseInput:
+      type: object
+      required: [amount, category, description, date]
+      properties:
+        amount:
+          type: number
+        category:
+          type: string
+        description:
+          type: string
+        date:
+          type: string
+
+    Summary:
+      type: object
+      required: [totalThisMonth, totalLastMonth, avgDaily, topCategory, expenseCount]
+      properties:
+        totalThisMonth:
+          type: number
+        totalLastMonth:
+          type: number
+        avgDaily:
+          type: number
+        topCategory:
+          type: string
+        expenseCount:
+          type: integer
+        changePercent:
+          type: ["number", "null"]
+
+    CategoryBreakdown:
+      type: object
+      required: [category, total, count, percentage]
+      properties:
+        category:
+          type: string
+        total:
+          type: number
+        count:
+          type: integer
+        percentage:
+          type: number
+
+    MonthlyTrend:
+      type: object
+      required: [month, total]
+      properties:
+        month:
+          type: string
+        total:
+          type: number
+
+    Prediction:
+      type: object
+      required: [predictedTotal, confidence, breakdown, basedOnMonths]
+      properties:
+        predictedTotal:
+          type: number
+        confidence:
+          type: number
+        breakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryPrediction"
+        basedOnMonths:
+          type: integer
+
+    CategoryPrediction:
+      type: object
+      required: [category, predicted]
+      properties:
+        category:
+          type: string
+        predicted:
+          type: number
+
+    Recommendation:
+      type: object
+      required: [title, description, potentialSaving, priority]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        potentialSaving:
+          type: number
+        priority:
+          type: string
